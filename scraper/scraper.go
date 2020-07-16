@@ -94,7 +94,7 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	}
 
 	laptop = items.Laptop{
-		Processor: items.Processor{
+		CPU: items.CPU{
 			Series: strings.TrimSpace(
 				row.DOM.Find(
 					".conf-td span[title='Серия процессора']",

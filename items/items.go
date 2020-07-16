@@ -2,25 +2,25 @@
 package items
 
 // ModificationType represents category of a product
-type ModificationType interface{};
+type ModificationType interface{}
 
 // Product provides information for a product
 type Product struct {
-	Name          string        `json:"name"`
+	Name          string             `json:"name"`
 	Modifications []ModificationType `json:"modifications"`
 }
 
 // Laptop provides laptop specifications
 type Laptop struct {
-	Processor `json:"processor"`
-	RAM       `json:"ram"`
-	GPU       `json:"gpu"`
-	Drive     `json:"drive"`
-	Price     `json:"price"`
+	CPU   `json:"cpu"`
+	RAM   `json:"ram"`
+	GPU   `json:"gpu"`
+	Drive `json:"drive"`
+	Price `json:"price"`
 }
 
-// Processor provides processor specifications
-type Processor struct {
+// CPU provides CPU specifications
+type CPU struct {
 	Series string `json:"series"`
 	Model  string `json:"model"`
 }

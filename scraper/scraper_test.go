@@ -57,7 +57,7 @@ func TestScrapeLaptop(t *testing.T) {
 		Name: "Apple MacBook Pro 13 (2020)",
 		Modifications: []items.ModificationType{
 			items.Laptop{
-				Processor: items.Processor{
+				CPU: items.CPU{
 					Series: "Core i5",
 					Model:  "8257U",
 				},
