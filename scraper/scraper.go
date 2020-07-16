@@ -9,6 +9,10 @@ import (
 	"github.com/yevhenshymotiuk/ekatalog-scraper/items"
 )
 
+func trimCapacitySuffix(s string) string {
+	return strings.TrimSuffix(s, "\u00a0ГБ")
+}
+
 func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	var (
 		laptop items.Laptop
@@ -16,20 +20,18 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	)
 
 	ramCapacity, err := strconv.Atoi(
-		strings.TrimSuffix(
+		trimCapacitySuffix(
 			row.DOM.Find(
 				".conf-td span[title='Объем оперативной памяти']",
 			).Text(),
-			"\u00a0ГБ",
 		),
 	)
 	if err != nil {
 		return laptop, err
 	}
 	driveCapacity, err := strconv.Atoi(
-		strings.TrimSuffix(
+		trimCapacitySuffix(
 			row.DOM.Find(".conf-td span[title='Емкость накопителя']").Text(),
-			"\u00a0ГБ",
 		),
 	)
 	if err != nil {
@@ -39,6 +41,7 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	pricesNode := row.DOM.Find(".price-int")
 	pricesSeparator := ".."
 	switch {
+	// Modification record contains both minimal and maximal price
 	case strings.Contains(pricesNode.Text(), pricesSeparator):
 		var minPrice, maxPrice int
 
@@ -68,6 +71,7 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 			Min: minPrice,
 			Max: maxPrice,
 		}
+	// Modification record contains only minimal price
 	case strings.Contains(pricesNode.Text(), "грн"):
 		minPrice, err := strconv.Atoi(
 			strings.Replace(
@@ -84,6 +88,7 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 		price = items.Price{
 			Min: minPrice,
 		}
+	// Modification doesn't have price
 	default:
 		price = items.Price{}
 	}
@@ -136,6 +141,7 @@ func ScrapeProduct(URL string) (product items.Product, err error) {
 		name = e.DOM.Text()
 	})
 
+	// Find row which correspond to modification
 	c.OnHTML(".conf-tr", func(e *colly.HTMLElement) {
 		laptop := items.Laptop{}
 		laptop, err = scrapeLaptop(e)
