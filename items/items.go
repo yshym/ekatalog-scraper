@@ -1,13 +1,19 @@
 // Package items provides models for extracted data
 package items
 
+// Product provides information for a product
+type Product struct {
+	Name          string        `json:"name"`
+	Modifications []interface{} `json:"modifications"`
+}
+
 // Laptop provides laptop specifications
 type Laptop struct {
-	Processor Processor `json:"processor"`
-	RAM       RAM       `json:"ram"`
-	GPU       GPU       `json:"gpu"`
-	Drive     Drive     `json:"drive"`
-	Price     Price     `json:"price"`
+	Processor `json:"processor"`
+	RAM       `json:"ram"`
+	GPU       `json:"gpu"`
+	Drive     `json:"drive"`
+	Price     `json:"price"`
 }
 
 // Processor provides processor specifications

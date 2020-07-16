@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 	"github.com/yevhenshymotiuk/ekatalog-scraper/items"
 )
 
-func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
+func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	var (
 		laptop items.Laptop
 		price  items.Price
@@ -19,7 +20,7 @@ func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
 
 	ramCapacity, err := strconv.Atoi(
 		strings.TrimSuffix(
-			e.DOM.Find(
+			row.DOM.Find(
 				".conf-td span[title='Объем оперативной памяти']",
 			).Text(),
 			"\u00a0ГБ",
@@ -30,7 +31,7 @@ func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
 	}
 	driveCapacity, err := strconv.Atoi(
 		strings.TrimSuffix(
-			e.DOM.Find(".conf-td span[title='Емкость накопителя']").Text(),
+			row.DOM.Find(".conf-td span[title='Емкость накопителя']").Text(),
 			"\u00a0ГБ",
 		),
 	)
@@ -38,7 +39,7 @@ func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
 		return laptop, err
 	}
 
-	pricesNode := e.DOM.Find(".price-int")
+	pricesNode := row.DOM.Find(".price-int")
 	pricesSeparator := ".."
 	switch {
 	case strings.Contains(pricesNode.Text(), pricesSeparator):
@@ -93,12 +94,12 @@ func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
 	laptop = items.Laptop{
 		Processor: items.Processor{
 			Series: strings.TrimSpace(
-				e.DOM.Find(
+				row.DOM.Find(
 					".conf-td span[title='Серия процессора']",
 				).Text(),
 			),
 			Model: strings.TrimSpace(
-				e.DOM.Find(
+				row.DOM.Find(
 					".conf-td span[title='Модель процессора']",
 				).Text(),
 			),
@@ -107,13 +108,15 @@ func scrapeLaptop(e *colly.HTMLElement) (items.Laptop, error) {
 			Capacity: ramCapacity,
 		},
 		GPU: items.GPU{
-			Model: e.DOM.Find(
-				".conf-td span[title='Модель видеокарты']",
-			).Text(),
+			Model: strings.TrimSpace(
+				row.DOM.Find(
+					".conf-td span[title='Модель видеокарты']",
+				).Text(),
+			),
 		},
 		Drive: items.Drive{
 			Type: strings.TrimSpace(
-				e.DOM.Find(".conf-td span[title='Тип накопителя']").Text(),
+				row.DOM.Find(".conf-td span[title='Тип накопителя']").Text(),
 			),
 			Capacity: driveCapacity,
 		},
@@ -131,26 +134,29 @@ func main() {
 
 func run() (err error) {
 	var (
-		title   string
-		laptops []items.Laptop
+		name          string
+		modifications []interface{}
 	)
 	c := colly.NewCollector()
 
 	c.OnHTML("#top-page-title .ib", func(e *colly.HTMLElement) {
-		title = e.DOM.Text()
+		name = e.DOM.Text()
 	})
 
 	c.OnHTML(".conf-tr", func(e *colly.HTMLElement) {
 		laptop := items.Laptop{}
 		laptop, err = scrapeLaptop(e)
 
-		laptops = append(laptops, laptop)
+		modifications = append(modifications, laptop)
 	})
 
 	err = c.Visit("https://ek.ua/APPLE-MACBOOK-PRO-13--2020--8TH-GEN-INTEL.htm")
 
-	fmt.Println(title)
-	fmt.Printf("%v\n", laptops)
+	productJSON, err := json.Marshal(
+		items.Product{Name: name, Modifications: modifications},
+	)
+
+	fmt.Printf("%v\n", string(productJSON))
 
 	return
 }
