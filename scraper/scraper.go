@@ -129,7 +129,7 @@ func ScrapeProduct(URL string) (product items.Product, err error) {
 
 	var (
 		name          string
-		modifications []interface{}
+		modifications []items.ModificationType
 	)
 
 	c.OnHTML("#top-page-title .ib", func(e *colly.HTMLElement) {
