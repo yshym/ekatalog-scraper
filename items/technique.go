@@ -21,9 +21,3 @@ type Drive struct {
 	Type     string `json:"type"`
 	Capacity int    `json:"capacity"`
 }
-
-// Price provides min/max prices of the laptop
-type Price struct {
-	Min int `json:"min"`
-	Max int `json:"max"`
-}
