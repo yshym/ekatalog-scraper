@@ -15,19 +15,22 @@ func main() {
 }
 
 func run() error {
-	product, err := scraper.ScrapeProduct(
+	URLs := []string{
 		"https://ek.ua/APPLE-MACBOOK-PRO-13--2020--8TH-GEN-INTEL.htm",
-	)
+		"https://ek.ua/APPLE-MACBOOK-PRO-13--2020--10TH-GEN-INTEL.htm",
+	}
+
+	products, err := scraper.ScrapeProducts(URLs)
 	if err != nil {
 		return err
 	}
 
-	productJSON, err := json.Marshal(product)
+	productsJSON, err := json.Marshal(products)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%v\n", string(productJSON))
+	fmt.Printf("%v\n", string(productsJSON))
 
 	return nil
 }

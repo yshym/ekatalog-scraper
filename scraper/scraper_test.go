@@ -44,51 +44,72 @@ func newTestServer() *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func TestScrapeLaptop(t *testing.T) {
+func TestScrapeLaptops(t *testing.T) {
 	ts := newTestServer()
 	defer ts.Close()
 
-	product, err := ScrapeProduct(ts.URL + "/html")
+	products, err := ScrapeProducts([]string{ts.URL + "/html"})
 	if err != nil {
-		t.Error("Failed to scrape product")
+		t.Error("Failed to scrape products")
 	}
 
-	wantProduct := items.Product{
-		Name: "Apple MacBook Pro 13 (2020)",
-		Modifications: []items.ModificationType{
-			items.Laptop{
-				CPU: items.CPU{
-					Series: "Core i5",
-					Model:  "8257U",
-				},
-				RAM: items.RAM{
-					Capacity: 8,
-				},
-				GPU: items.GPU{
-					Model: "Iris Plus Graphics 645",
-				},
-				Drive: items.Drive{
-					Type:     "SSD",
-					Capacity: 256,
-				},
-				Price: items.Price{
-					Min: 36949,
-					Max: 43176,
+	wantProducts := []items.Product{
+		{
+			Name: "Apple MacBook Pro 13 (2020)",
+			Modifications: []items.ModificationType{
+				items.Laptop{
+					CPU: items.CPU{
+						Series: "Core i5",
+						Model:  "8257U",
+					},
+					RAM: items.RAM{
+						Capacity: 8,
+					},
+					GPU: items.GPU{
+						Model: "Iris Plus Graphics 645",
+					},
+					Drive: items.Drive{
+						Type:     "SSD",
+						Capacity: 256,
+					},
+					Price: items.Price{
+						Min: 36949,
+						Max: 43176,
+					},
 				},
 			},
 		},
 	}
 
-	productName := product.Name
-	wantProductName := wantProduct.Name
+	for i, p := range products {
+		assertProductEquals(t, p, wantProducts[i])
+	}
+}
 
-	if productName != wantProductName {
-		t.Errorf("got: %s, want: %s", productName, wantProductName)
+func assertProductEquals(t *testing.T, got items.Product, want items.Product) {
+	t.Helper()
+
+	gotName := got.Name
+	wantName := want.Name
+
+	if gotName != wantName {
+		t.Errorf(
+			"product names are not equal: got: %s, want: %s",
+			gotName,
+			wantName,
+		)
 	}
 
-	for i, m := range product.Modifications {
-		if m != wantProduct.Modifications[i] {
-			t.Errorf("got: %s, want: %s", product, wantProduct)
+	gotModifications := got.Modifications
+	wantModifications := want.Modifications
+
+	for i, m := range gotModifications {
+		if m != wantModifications[i] {
+			t.Errorf(
+				"product modifications are not equal: got: %s, want: %s",
+				gotModifications,
+				wantModifications,
+			)
 		}
 	}
 }

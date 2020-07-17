@@ -128,8 +128,8 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	return laptop, nil
 }
 
-// ScrapeProduct scrapes product by URL
-func ScrapeProduct(URL string) (product items.Product, err error) {
+// TODO: Add other categories (not only Laptops)
+func scrapeProduct(URL string) (product items.Product, err error) {
 	c := colly.NewCollector()
 
 	var (
@@ -154,4 +154,20 @@ func ScrapeProduct(URL string) (product items.Product, err error) {
 	product = items.Product{Name: name, Modifications: modifications}
 
 	return
+}
+
+// ScrapeProducts scrapes products by URLs
+func ScrapeProducts(URLs []string) ([]items.Product, error) {
+	products := []items.Product{}
+
+	for _, URL := range(URLs) {
+		p, err := scrapeProduct(URL)
+		if err != nil {
+			return products, err
+		}
+
+		products = append(products, p)
+	}
+
+	return products, nil
 }
