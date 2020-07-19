@@ -37,8 +37,7 @@ func newTestServer() *httptest.Server {
 </tbody>
 </table>
 </body>
-</html>
-		`))
+</html>`))
 	})
 
 	return httptest.NewServer(mux)
@@ -86,7 +85,7 @@ func TestScrapeLaptops(t *testing.T) {
 	}
 }
 
-func assertProductEquals(t *testing.T, got items.Product, want items.Product) {
+func assertProductEquals(t *testing.T, got, want items.Product) {
 	t.Helper()
 
 	gotName := got.Name
