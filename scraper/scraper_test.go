@@ -3,6 +3,7 @@ package scraper
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/yevhenshymotiuk/ekatalog-scraper/items"
@@ -80,35 +81,11 @@ func TestScrapeLaptops(t *testing.T) {
 		},
 	}
 
-	for i, p := range products {
-		assertProductEquals(t, p, wantProducts[i])
-	}
-}
+	for i, got := range products {
+		want := wantProducts[i]
 
-func assertProductEquals(t *testing.T, got, want items.Product) {
-	t.Helper()
-
-	gotName := got.Name
-	wantName := want.Name
-
-	if gotName != wantName {
-		t.Errorf(
-			"product names are not equal: got: %s, want: %s",
-			gotName,
-			wantName,
-		)
-	}
-
-	gotModifications := got.Modifications
-	wantModifications := want.Modifications
-
-	for i, m := range gotModifications {
-		if m != wantModifications[i] {
-			t.Errorf(
-				"product modifications are not equal: got: %s, want: %s",
-				gotModifications,
-				wantModifications,
-			)
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("products are not equal: got: %+v, want: %+v", got, want)
 		}
 	}
 }
