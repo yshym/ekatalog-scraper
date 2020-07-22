@@ -21,6 +21,7 @@ func newTestServer() *httptest.Server {
 <title>Test Page</title>
 </head>
 <body>
+<a href="/k298.htm" class="path_lnk">Ноутбуки</a>
 <div id="top-page-title">
 <b class="ib">Apple MacBook Pro 13 (2020)</b>
 </div>
