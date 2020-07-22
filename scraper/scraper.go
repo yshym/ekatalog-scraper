@@ -1,6 +1,8 @@
 package scraper
 
 import (
+	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -9,8 +11,38 @@ import (
 	"github.com/yevhenshymotiuk/ekatalog-scraper/items"
 )
 
+func removeSpaces(s string) string {
+	return strings.ReplaceAll(s, "\u00a0", "")
+}
+
 func trimCapacitySuffix(s string) string {
 	return strings.TrimSuffix(s, "\u00a0ГБ")
+}
+
+func specificationsURL(URL string) string {
+	productNameRegexp := regexp.MustCompilePOSIX(
+		`https:\/\/ek\.ua\/(([[:alnum:]]|\-)+)\.htm`,
+	)
+	groups := productNameRegexp.FindStringSubmatch(URL)
+
+	return fmt.Sprintf(
+		"https://ek.ua/ek-item.php?resolved_name_=%s&view_=tbl",
+		groups[1],
+	)
+}
+
+func scrapeCategory(URL string) (string, error) {
+	var category string
+
+	c := colly.NewCollector()
+
+	c.OnHTML(".path_lnk", func(e *colly.HTMLElement) {
+		category = e.DOM.Text()
+	})
+
+	err := c.Visit(URL)
+
+	return category, err
 }
 
 func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
@@ -128,26 +160,98 @@ func scrapeLaptop(row *colly.HTMLElement) (items.Laptop, error) {
 	return laptop, nil
 }
 
+func scrapeSmartphone(table *colly.HTMLElement) (items.Smartphone, error) {
+	var smartphone items.Smartphone
+
+	tds := table.DOM.Find(".op3")
+
+	ramCapacity, err := strconv.Atoi(
+		trimCapacitySuffix(tds.Get(11).FirstChild.Data),
+	)
+	if err != nil {
+		return smartphone, err
+	}
+	driveCapacity, err := strconv.Atoi(
+		trimCapacitySuffix(tds.Get(12).FirstChild.Data),
+	)
+	if err != nil {
+		return smartphone, err
+	}
+
+	minPrice, err := strconv.Atoi(
+		removeSpaces(
+			table.DOM.Find("span[itemprop='lowPrice']").First().Text(),
+		),
+	)
+	if err != nil {
+		return smartphone, err
+	}
+	maxPrice, err := strconv.Atoi(
+		removeSpaces(
+			table.DOM.Find("span[itemprop='highPrice']").First().Text(),
+		),
+	)
+	if err != nil {
+		return smartphone, err
+	}
+
+	smartphone = items.Smartphone{
+		CPU: items.CPU{
+			Model: strings.TrimSpace(tds.Get(7).FirstChild.Data),
+		},
+		RAM: items.RAM{
+			Capacity: ramCapacity,
+		},
+		GPU: items.GPU{
+			Model: strings.TrimSpace(tds.Get(10).FirstChild.Data),
+		},
+		Drive: items.Drive{
+			Type:     tds.Get(13).FirstChild.Data,
+			Capacity: driveCapacity,
+		},
+		Price: items.Price{
+			Min: minPrice,
+			Max: maxPrice,
+		},
+	}
+
+	return smartphone, nil
+}
+
 // TODO: Add other categories (not only Laptops)
 func scrapeProduct(URL string) (product items.Product, err error) {
-	c := colly.NewCollector()
-
 	var (
 		name          string
 		modifications []items.ModificationType
 	)
 
-	c.OnHTML("#top-page-title .ib", func(e *colly.HTMLElement) {
+	category, err := scrapeCategory(URL)
+
+	c := colly.NewCollector()
+
+	c.OnHTML("#top-page-title b.ib", func(e *colly.HTMLElement) {
 		name = e.DOM.Text()
 	})
 
-	// Find row which correspond to modification
-	c.OnHTML(".conf-tr", func(e *colly.HTMLElement) {
-		laptop := items.Laptop{}
-		laptop, err = scrapeLaptop(e)
+	switch category {
+	case "Ноутбуки":
+		// Find row which correspond to modification
+		c.OnHTML(".conf-tr", func(e *colly.HTMLElement) {
+			laptop := items.Laptop{}
+			laptop, err = scrapeLaptop(e)
 
-		modifications = append(modifications, laptop)
-	})
+			modifications = append(modifications, laptop)
+		})
+	default:
+		URL = specificationsURL(URL)
+
+		c.OnHTML(".common-table-div", func(e *colly.HTMLElement) {
+			smartphone := items.Smartphone{}
+			smartphone, err = scrapeSmartphone(e)
+
+			modifications = append(modifications, smartphone)
+		})
+	}
 
 	err = c.Visit(URL)
 
@@ -160,7 +264,7 @@ func scrapeProduct(URL string) (product items.Product, err error) {
 func ScrapeProducts(URLs []string) ([]items.Product, error) {
 	products := []items.Product{}
 
-	for _, URL := range(URLs) {
+	for _, URL := range URLs {
 		p, err := scrapeProduct(URL)
 		if err != nil {
 			return products, err

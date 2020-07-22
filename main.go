@@ -18,6 +18,7 @@ func run() error {
 	URLs := []string{
 		"https://ek.ua/APPLE-MACBOOK-PRO-13--2020--8TH-GEN-INTEL.htm",
 		"https://ek.ua/APPLE-MACBOOK-PRO-13--2020--10TH-GEN-INTEL.htm",
+		"https://ek.ua/SAMSUNG-GALAXY-S20-ULTRA-512GB.htm",
 	}
 
 	products, err := scraper.ScrapeProducts(URLs)
